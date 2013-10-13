@@ -9,6 +9,7 @@ import scala.reflect.internal.Flags._
 import scala.tools.nsc
 import scala.tools.nsc.ast.Printers
 import nsc.Global
+import java.lang.System
 
 object PrettyPrinters{
   private[PrettyPrinters] trait PrinterDescriptor
@@ -449,7 +450,7 @@ class PrettyPrinters(val global: Global) {
           //TODO see impl filter on Tree
           val (left, right) = body.filter {
             //remove valdefs defined in constructor and pre-init block
-            case vd: ValDef => !vd.mods.hasFlag(PARAMACCESSOR) && !vd.mods.hasFlag(PRESUPER)
+            case vd: ValDef => System.out.println("vd inside super template(1): " + showRaw(vd)); !vd.mods.hasFlag(PARAMACCESSOR) && !vd.mods.hasFlag(PRESUPER)
             case dd: DefDef => dd.name != nme.MIXIN_CONSTRUCTOR //remove $this$ from traits
             case EmptyTree => false
             case _ => true
@@ -470,6 +471,11 @@ class PrettyPrinters(val global: Global) {
               print(" {")
             }
             contextManaged(tree) {
+              modBody foreach {
+                //here it's ok
+                case vdd : ValDef => System.out.println("showRaw before printColumn: " + showRaw(vdd))
+                case _ =>
+              }
               printColumn(modBody, "", ";", "}")
             }
           }
@@ -689,5 +695,174 @@ class PrettyPrinters(val global: Global) {
     }
   }
 
-  class AfterTyperPrinter(out: PrintWriter) extends PrettyPrinter(out)
+  class AfterTyperPrinter(out: PrintWriter) extends PrettyPrinter(out) { // extends global.TreePrinter(out) { //extends PrettyPrinter(out) {
+      def printTypeTree(ttr: Tree) = {
+        ttr.tpe.toString()
+      }
+
+    override def printTree(tree: Tree) {
+      //val sym: Symbol = tree.symbol
+      tree match {
+//        case dd @ DefDef(mods, name, tparams, vparamss, tp, rhs) =>
+//          val sym = dd.symbol
+//          System.out.println("=========")
+//          System.out.println("showRaw: " + showRaw(tree))
+//          System.out.println("sym.isSynthetic = " + sym.isSynthetic)
+//          System.out.println("sym.isConstructor = " + sym.isConstructor)
+//          System.out.println("sym = " + sym)
+//          val symTP = tp.symbol
+//          System.out.println("symTP = " + symTP)
+//          System.out.println("symTP.isSynthetic = " + symTP.isSynthetic)
+//          System.out.println("symTP.isAliasType = " + symTP.isAliasType)
+//          System.out.println("symTP.isAnonOrRefinementClass = " + symTP.isAnonOrRefinementClass)
+//          System.out.println("symTP.isBridge = " + symTP.isBridge)
+//          System.out.println("symTP.isCompileTimeOnly = " + symTP.isCompileTimeOnly)
+//          System.out.println("symTP.isEarlyInitialized = " + symTP.isEarlyInitialized)
+//          System.out.println("symTP.isInitialized = " + symTP.isInitialized)
+//          System.out.println("symTP.isLocatable = " + symTP.isLocatable)
+//          System.out.println("symTP.isNonClassTyp = " + symTP.isNonClassType)
+//          System.out.println("symTP.isSpecialized = " + symTP.isSpecialized)
+//          System.out.println("symTP.isDeferred = " + symTP.isDeferred)
+//          System.out.println("symTP.isStable = " + symTP.isStable)
+//          System.out.println("symTP.isArtifact = " + symTP.isArtifact)
+//          System.out.println("tp.isEmpty = " + tp.isEmpty)
+//          System.out.println("tp.isType = " + tp.isType)
+//          System.out.println("tp.tpe.isComplete = " + tp.tpe.isComplete)
+//          System.out.println("tp.tpe.isNotNull = " + tp.tpe.isNotNull)
+//          System.out.println("tp.tpe.isVolatile = " + tp.tpe.isVolatile)
+//          System.out.println("tp.tpe.isGround = " + tp.tpe.isGround)
+//          System.out.println("tp.tpe.isStable = " + tp.tpe.isStable)
+//          System.out.println("tp.tpe.isStructuralRefinement = " + tp.tpe.isStructuralRefinement)
+//          System.out.println("tp.tpe.termSymbol = " + tp.tpe.termSymbol)
+//          System.out.println("tp.tpe.typeSymbol = " + tp.tpe.typeSymbol)
+//          val erased = tp.tpe.erasure
+//          System.out.println("erased = " + erased)
+//          System.out.println("erased.isComplete = " + erased.isComplete)
+//          System.out.println("erased.isNotNull = " + erased.isNotNull)
+//          System.out.println("erased.isVolatile = " + erased.isVolatile)
+//          System.out.println("erased.isGround = " + erased.isGround)
+//          System.out.println("erased.isStable = " + erased.isStable)
+//          System.out.println("erased.isStructuralRefinement = " + erased.isStructuralRefinement)
+//          System.out.println("erased.termSymbol = " + erased.termSymbol)
+//          System.out.println("erased.typeSymbol = " + erased.typeSymbol)
+//          System.out.println("tp.isTyped = " + tp.isTyped)
+//          if (tp.isInstanceOf[TypeTree]) {
+//            val ot = tp.asInstanceOf[TypeTree]
+//            System.out.println("ot.original = " + ot.original)
+//            if (ot.original != null) {
+//              System.out.println("ot.original.symbol = " + ot.original.symbol)
+//            }
+//            System.out.println("ot.wasEmpty = " + ot.wasEmpty)
+//
+//          }
+//
+//
+//          super.printTree(tree)
+        case pd: PackageDef =>
+          System.out.println("showRaw fullTree: " + showRaw(pd))
+          super.printTree(tree)
+
+        case temp: Template =>
+          System.out.println("--- show template ---");
+          System.out.println("showRaw template: " + showRaw(temp))
+//          System.out.println("product List: " + temp.productIterator.toList filter (tree => tree match {
+//            case vd: ValDef => true
+//            case _ => false
+//          }))
+
+          val listOfTemplates = temp.productIterator.toList
+
+          System.out.println("---- iterator ----")
+          System.out.println("listOfTemplates: " + listOfTemplates(2))
+//          val it = listOfTemplates(2).asInstanceOf[List[Tree]].iterator
+//          while (it.hasNext) {
+//            showRaw(it.next)
+////            body(it.next)
+//          }
+          val firstEl = listOfTemplates(2).asInstanceOf[List[Tree]](1)
+          val thirdEl = listOfTemplates(2).asInstanceOf[List[Tree]](3)
+          System.out.println("firstEl: " + showRaw(firstEl))
+          System.out.println("thirdEl: " + showRaw(thirdEl))
+          System.out.println("--------")
+
+        //good (printing with set original)
+          val testEls = listOfTemplates(2).asInstanceOf[List[Tree]]
+          testEls foreach {
+            case vvd: ValDef => System.out.println("valDef inside (1): " + showRaw(vvd))
+            case _ =>
+          }
+
+        //if pass in such a way all is ok
+          testEls foreach {
+            case vvd: ValDef => System.out.println("valDef inside (2): " + showRaw(vvd)); //printTree(vvd) - if pass in such a way all is ok
+            case _ =>
+          }
+
+          System.out.println("----------------------")
+
+          super.printTree(temp)
+
+//        case block: Block =>
+//          System.out.println("--- show block ---");
+//          System.out.println("showRaw block: " + showRaw(block))
+//          super.printTree(block)
+
+          //doesn't work well
+        case vd: ValDef =>
+          System.out.println("--- show valdef ---");
+          System.out.println("showRaw valdef: " + showRaw(vd))
+          System.out.println("showRaw valdef (tree): " + showRaw(tree) )
+          super.printTree(vd)
+
+//        case vd @ ValDef(mods, name, tp, rhs) =>
+//
+//          if (tp.isInstanceOf[TypeTree]) {
+//            System.out.println("INSTANCE of TypeTree:")
+//            val typeTree: TypeTree = tp.asInstanceOf[TypeTree]
+//            val typeT = tp.tpe//printTypeTree(tp)
+//
+//            System.out.println("=============================")
+//            System.out.println("showRaw vd: " + showRaw(vd))
+//            System.out.println("-----------------------------")
+//            System.out.println("showRaw: " + showRaw(tp))
+//            System.out.println("typeTreeString is: " + tp.toString)
+//            if (typeT != null)
+//              System.out.println("typeString is: " + typeT.toString)
+//            System.out.println("typeTree.isEmpty: " + typeTree.isEmpty)
+//
+//            System.out.println("showRaw (original): " + showRaw(typeTree.original))
+//            if (typeTree.original != null) {
+//              System.out.println("typeTree.isEmpty (original): " + typeTree.original.isEmpty)
+//              System.out.println("typeTreeString is (original): " + typeTree.original.toString)
+//              System.out.println("typeString is (original): " + typeTree.original.tpe.toString)
+//            }
+//          } else {
+//            System.out.println("INSTANCE of TypTree:")
+//            val typTree = tp
+//            val typeT = tp.tpe//printTypeTree(tp)
+//
+//            System.out.println("=============================")
+//            System.out.println("showRaw vd: " + showRaw(vd))
+//            System.out.println("-----------------------------")
+//            System.out.println("showRaw: " + showRaw(tp))
+//            System.out.println("typTreeString is: " + tp.toString)
+//            if (typeT != null)
+//              System.out.println("typString is: " + typeT.toString)
+//            //System.out.println("typeTree.isEmpty: " + typTree.isEmpty)
+//          }
+//
+////          val sym: Symbol = vd.symbol
+////          System.out.println("=========")
+////          System.out.println("showRaw: " + showRaw(tree))
+////          System.out.println("sym.isSynthetic = " + sym.isSynthetic)
+////          System.out.println("sym.isVar = " + sym.isVar)
+////          System.out.println("sym.isVariable = " + sym.isVariable)
+////          System.out.println("sym.isConstant = " + sym.isConstant)
+////          System.out.println("sym = " + sym)
+////
+//          super.printTree(tree)
+        case _ => super.printTree(tree)
+      }
+    }
+  }
 }
